@@ -1,38 +1,32 @@
-# Mi Entrenamiento — frontend móvil + datos centralizados
+# Mi Entrenamiento — versión reparada
 
-## Importante: dónde se guardan los datos
-Los datos NO se guardan en el navegador ni en un JSON del repositorio. GitHub Pages es un hosting estático: no permite que el JavaScript del sitio escriba de forma segura archivos en el repositorio. Si guardáramos los datos mediante un token de GitHub dentro del frontend, cualquier visitante podría extraerlo y modificar el repositorio.
+## Qué corrige
+- Guarda el perfil, inventario/discos, cargas, rutinas, registros diarios y sesiones en Supabase, asociados al usuario autenticado.
+- Al iniciar sesión, recupera los datos guardados y rellena el formulario; no comienza de cero.
+- Al guardar el perfil, genera y guarda una rutina semanal usando el equipo registrado.
+- Permite regenerar la rutina después de cambiar equipo/cargas.
+- Permite cargar GIF reales por ejercicio. Se suben a Supabase Storage y se ven en otros dispositivos.
+- Si un GIF todavía no existe, la guía muestra instrucciones de ejecución, puntos técnicos, series, repeticiones y descanso. No muestra un dibujo falso.
+- La interfaz está diseñada primero para móvil.
 
-Esta versión utiliza Supabase como base de datos centralizada. El perfil, el inventario, las cargas y los registros diarios se guardan como un documento JSONB asociado a la cuenta autenticada. Puedes iniciar sesión desde varios dispositivos y recuperar los mismos datos.
+## Configuración obligatoria de Supabase
+1. Abre el proyecto Supabase que ya usas.
+2. En SQL Editor ejecuta el contenido COMPLETO de `supabase.sql`. Esto crea/actualiza tabla, RLS y bucket para GIF.
+3. Abre Project Settings → API (o Connect) y copia Project URL y publishable/anon public key.
+4. Pega ambas en `config.js`. No uses service_role/secret key.
+5. Sube todos los archivos a GitHub y publica desde Settings → Pages.
 
-## Configuración (una sola vez)
-1. Crea un proyecto en https://supabase.com (el plan gratuito basta para empezar).
-2. Abre **SQL Editor** y ejecuta el contenido completo de `supabase.sql`.
-3. En Supabase, entra a **Project Settings → API** (o Connect) y copia:
-   - Project URL
-   - Publishable key (o anon public key)
-4. Edita `config.js` y pega esos dos valores.
-   - No uses `service_role` ni secret key.
-5. Sube TODOS los archivos del proyecto a la raíz de un repositorio GitHub.
-6. En GitHub: **Settings → Pages → Deploy from a branch → main → /(root)**.
-7. Abre la URL de Pages, crea tu cuenta e inicia sesión.
+## Importante si ya tenías una tabla previa
+Este código utiliza `public.training_data` con columnas `user_id` (uuid, PK), `data` (jsonb), `updated_at` (timestamptz). Si la tabla anterior tenía otro esquema, no basta con que el login funcione: ejecuta el SQL y verifica que esa tabla tenga exactamente esas columnas.
 
-## Funcionalidad actual
-- Autenticación con correo y contraseña.
-- Perfil inicial capturado desde la app.
-- Registro de objetivo, peso, altura, días disponibles, minutos por sesión.
-- Registro de meta de agua y caminata.
-- Inventario editable: discos, mancuernas, barras, banco y otros; peso y cantidad.
-- Registro de cargas actuales por movimiento.
-- Registro diario de agua y caminata.
-- Panel de progreso básico.
-- Diseño responsive pensado primero para celular.
+## Cómo verificar guardado
+Después de guardar tu perfil:
+- Debe aparecer “Datos guardados en Supabase y rutina generada.”
+- En Supabase → Table Editor → training_data debe aparecer una fila para tu UUID con `data.profile`, `data.equipment`, `data.loads` y `data.routines`.
+- Si falla, la app muestra el error de Supabase en lugar de fingir que guardó.
 
-## GIFs de ejercicios
-La interfaz de rutinas está preparada para incorporar demostraciones reales por ejercicio. Los GIF se alojarán como archivos estáticos en `assets/gifs/` y se referenciarán desde los ejercicios. No se sustituyen por animaciones CSS o dibujos genéricos. Los GIF se añadirán cuando se definan los ejercicios correctos.
+## GIFs
+En Rutinas abre Guía en un ejercicio y elige Cargar GIF. Solo acepta GIF de hasta 8 MB. Se almacena en el bucket `exercise-gifs`, dentro de una carpeta con tu UUID. Para ejercicios sin GIF se muestra una guía textual con ejecución y puntos de técnica.
 
-## IA futura
-El frontend está desacoplado de cualquier proveedor. Para IA online se agregará una función backend (Supabase Edge Function) que guarde la clave del proveedor en Secrets y devuelva propuestas validadas. Nunca se expone una API key privada en GitHub Pages. Para IA local se puede añadir un conector opcional, pero solo funcionará en un equipo que tenga ese runtime.
-
-## Nota
-El archivo `config.js` contiene únicamente la URL y la clave pública de Supabase. Las políticas RLS del SQL impiden que un usuario lea o modifique el documento JSON de otro usuario.
+## Persistencia
+Los datos no se guardan en localStorage ni IndexedDB ni en un JSON local. Supabase es el almacenamiento central, accesible desde cualquier dispositivo al iniciar sesión.
