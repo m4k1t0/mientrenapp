@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#172a24"><title>Mi entrenamiento</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div id="authScreen" class="auth-wrap">
+ <div class="brand"><span class="brand-mark">M</span><div><b>MI ENTRENAMIENTO</b><small>Tu progreso, en todos tus dispositivos</small></div></div>
+ <section class="panel auth-panel">
+  <p class="eyebrow">ACCESO PERSONAL</p><h1>Tu espacio de entrenamiento.</h1>
+  <p class="muted">Inicia sesión o crea tu cuenta. Tus datos se guardan de forma centralizada y podrás entrar desde el celular o la computadora.</p>
+  <label>Correo electrónico<input id="authEmail" type="email" autocomplete="email" placeholder="tu@correo.com"></label>
+  <label>Contraseña<input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo 8 caracteres"></label>
+  <div class="auth-actions"><button id="signIn" class="btn primary">Iniciar sesión</button><button id="signUp" class="btn secondary">Crear cuenta</button></div>
+  <p id="authMessage" class="message"></p>
+  <p class="tiny">Primero configura la conexión a Supabase en <code>config.js</code>. Instrucciones en README.</p>
+ </section>
+</div>
+<div id="app" class="hidden">
+<header class="topbar"><div class="brand"><span class="brand-mark">M</span><div><b>MI ENTRENAMIENTO</b><small id="userLabel">Mi espacio</small></div></div><button id="logout" class="icon-btn" aria-label="Cerrar sesión">↗</button></header>
+<main>
+<section id="view-home" class="view">
+ <div class="welcome"><div><p class="eyebrow" id="dateLabel">HOY</p><h1 id="greeting">Vamos paso a paso.</h1><p class="muted">Tu entrenamiento empieza con lo que tienes hoy.</p></div><div class="avatar">✦</div></div>
+ <div class="stats-grid">
+  <article class="stat"><span>AGUA</span><strong id="waterToday">0 ml</strong><small id="waterGoalLabel">Meta por definir</small></article>
+  <article class="stat"><span>CAMINATA</span><strong id="walkToday">0 min</strong><small>Actividad de hoy</small></article>
+ </div>
+ <article class="panel today-panel"><div class="panel-head"><div><p class="eyebrow">TU PLAN</p><h2 id="todayTitle">Configura tu punto de partida</h2></div><span class="pill" id="todayPill">Primeros pasos</span></div><p id="todayDescription" class="muted">Completa tu perfil para construir una rutina con tu equipo y tus cargas reales.</p><button class="btn primary full" id="startToday">Completar mi perfil</button></article>
+ <div class="quick-grid"><button class="quick" data-go="water"><span>＋</span><b>Registrar agua</b><small>Hidratación</small></button><button class="quick" data-go="walk"><span>↗</span><b>Registrar caminata</b><small>Actividad diaria</small></button></div>
+</section>
+<section id="view-setup" class="view hidden">
+ <div class="page-title"><p class="eyebrow">CONFIGURACIÓN INICIAL</p><h1>Cuéntame con qué contamos.</h1><p class="muted">Todo esto se captura aquí, dentro de la aplicación. Puedes editarlo después.</p></div>
+ <form id="profileForm" class="stack">
+  <article class="panel"><p class="eyebrow">01 · OBJETIVO Y DISPONIBILIDAD</p><h2>Tu punto de partida</h2>
+   <label>¿Cuál es tu objetivo principal?<select id="goal"><option value="Mejorar condición física y fuerza">Mejorar condición física y fuerza</option><option value="Ganar fuerza">Ganar fuerza</option><option value="Mejorar resistencia">Mejorar resistencia</option><option value="Reducir grasa corporal">Reducir grasa corporal</option><option value="Crear hábito de actividad">Crear hábito de actividad</option></select></label>
+   <div class="two"><label>Peso actual (kg)<input id="bodyWeight" type="number" min="1" step=".1" placeholder="Ej. 93.2"></label><label>Altura (cm)<input id="height" type="number" min="1" placeholder="Ej. 170"></label></div>
+   <div class="two"><label>Días de entrenamiento/semana<input id="days" type="number" min="1" max="7" value="4"></label><label>Minutos por sesión<input id="minutes" type="number" min="10" max="180" value="35"></label></div>
+   <label>Meta diaria de agua (ml)<input id="waterGoal" type="number" min="250" step="250" value="2000"></label>
+   <div class="two"><label>Meta de caminata (min/día)<input id="walkGoal" type="number" min="0" value="25"></label><label>Fecha de inicio<input id="startDate" type="date"></label></div>
+  </article>
+  <article class="panel"><p class="eyebrow">02 · TU EQUIPO</p><h2>Registra cada disco</h2><p class="muted">Añade la cantidad y el peso de cada disco. También puedes registrar barras, mancuernas y banco.</p>
+   <div id="equipmentRows" class="rows"></div><button type="button" class="btn secondary full" id="addEquipment">＋ Añadir equipo o discos</button>
+  </article>
+  <article class="panel"><p class="eyebrow">03 · TUS CARGAS ACTUALES</p><h2>¿Cuánto levantas hoy?</h2><p class="muted">Registra el peso total que utilizas actualmente. Si no lo sabes, déjalo vacío y lo mediremos progresivamente.</p>
+   <div class="load-grid">
+    <label>Sentadilla (kg)<input data-load="sentadilla" type="number" min="0" step=".5" placeholder="No sé / 0"></label>
+    <label>Press de pecho (kg)<input data-load="press de pecho" type="number" min="0" step=".5" placeholder="No sé / 0"></label>
+    <label>Remo (kg)<input data-load="remo" type="number" min="0" step=".5" placeholder="No sé / 0"></label>
+    <label>Peso muerto rumano (kg)<input data-load="peso muerto rumano" type="number" min="0" step=".5" placeholder="No sé / 0"></label>
+    <label>Curl de bíceps (kg)<input data-load="curl de bíceps" type="number" min="0" step=".5" placeholder="No sé / 0"></label>
+    <label>Press de hombro (kg)<input data-load="press de hombro" type="number" min="0" step=".5" placeholder="No sé / 0"></label>
+   </div>
+  </article>
+  <button class="btn primary full big" type="submit">Guardar mi punto de partida</button>
+ </form>
+</section>
+<section id="view-water" class="view hidden">
+ <div class="page-title"><p class="eyebrow">HIDRATACIÓN</p><h1>Agua de hoy.</h1><p class="muted">Registra lo que tomas y consulta tu avance.</p></div>
+ <article class="panel water-panel"><div class="water-ring"><div><strong id="waterPercent">0%</strong><small>de tu meta</small></div></div><h2 id="waterProgress">0 de 0 ml</h2><div class="button-row"><button class="btn secondary" data-water="250">+250 ml</button><button class="btn secondary" data-water="500">+500 ml</button><button class="btn primary" data-water="-250">−250 ml</button></div><label>Registrar cantidad personalizada (ml)<div class="inline"><input id="customWater" type="number" min="1" placeholder="Ej. 350"><button class="btn primary" id="addCustomWater">Agregar</button></div></label></article>
+</section>
+<section id="view-walk" class="view hidden">
+ <div class="page-title"><p class="eyebrow">ACTIVIDAD DIARIA</p><h1>Tu caminata.</h1><p class="muted">Registra los minutos que caminaste hoy.</p></div>
+ <article class="panel"><label>Minutos caminados<input id="walkMinutes" type="number" min="0" max="600" placeholder="Ej. 25"></label><button id="saveWalk" class="btn primary full">Guardar caminata</button><p id="walkStatus" class="message"></p></article>
+</section>
+<section id="view-training" class="view hidden">
+ <div class="page-title"><p class="eyebrow">ENTRENAMIENTO</p><h1>Tu rutina.</h1><p class="muted">Las sesiones se definirán a partir de tu equipo y tus cargas.</p></div>
+ <article class="panel"><h2 id="trainingTitle">Primero completa tu perfil</h2><p id="trainingText" class="muted">Después podrás consultar ejercicios, series, repeticiones, descansos y las animaciones GIF correspondientes.</p><div id="exerciseGuideList"></div></article>
+</section>
+<section id="view-progress" class="view hidden">
+ <div class="page-title"><p class="eyebrow">EVOLUCIÓN</p><h1>Tu progreso.</h1><p class="muted">Datos centralizados de tu cuenta.</p></div>
+ <article class="panel"><h2>Tu punto de partida</h2><div id="profileSummary" class="summary-list"></div></article>
+ <article class="panel"><h2>Historial</h2><div id="historyList" class="muted">Todavía no hay registros.</div></article>
+</section>
+</main>
+<nav class="bottom-nav">
+ <button data-go="home" class="active"><span>⌂</span>Inicio</button><button data-go="training"><span>◈</span>Rutina</button><button data-go="water"><span>◉</span>Agua</button><button data-go="walk"><span>↗</span>Caminar</button><button data-go="progress"><span>▥</span>Progreso</button>
+</nav>
+</div>
+<div id="toast" role="status"></div>
+<script src="config.js"></script><script src="app.js"></script>
+</body></html>
